@@ -288,9 +288,13 @@ class EhCacheApi @Inject() (cache: Ehcache) extends CacheApi {
 
   def getOrElse[A: ClassTag](key: String, expiration: Duration)(orElse: => A) = {
     get[A](key).getOrElse {
-      val value = orElse
-      set(key, value, expiration)
-      value
+      key.synchronized {
+        get[A](key).getOrElse {
+          val value = orElse
+          set(key, value, expiration)
+          value
+        }
+      }
     }
   }
 
